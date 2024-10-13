@@ -1,0 +1,192 @@
+<style>
+
+  input {
+    padding: 8px;
+    border: 1px solid #C8C7CC;
+    box-sizing: border-box;
+    /* position: relative; */
+    /* top: 16px; */
+    /* right: 24px; */
+    border-radius: 4px;
+    width: 100%;
+  }
+
+  input:focus {
+    outline-color: #1B9BE3;
+  }
+::placeholder{color: #C8C7CC;}
+  /* .search_keyword_input {
+    margin-left: 16px;
+    margin-right: 16px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    width: 91%;
+  } */
+
+  .search_keyword {
+    width: 466px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    background-color: #ffffff;
+    position: fixed;
+    z-index: 999;
+    top:0;
+    /* box-shadow: 0 1px 2px hsla(0,0%,0%,0.05),0 1px 4px hsla(0,0%,0%,0.05),0 2px 8px hsla(0,0%,0%,0.05); */
+    border-bottom: 1px solid #e8ebf1;
+  }
+
+  .page_span {
+    font-size: 14px;
+    position: relative;
+    /* bottom: -8px;
+    display:block;
+    text-align:right; */
+    color:#8e8e8e
+  }
+
+
+  .singleresult {
+    border-bottom: 1px solid #e8ebf1;
+    padding:8px;
+    color:#333333;
+    font-size: 14px;
+  }
+  .singleresult:hover{
+    background-color: #e8ebf1;
+    border-radius: 4px;
+    /* border-bottom: 1px solid ffffff; */
+  }
+  .singleresult:focus{
+    /* background-color: #e8ebf1; */
+    border-radius: 4px;
+    outline-color: #1B9BE3;
+    /* border: 0px solid; */
+  }
+
+  .results {
+    border-radius: 4px;
+    margin-left: 8px;
+    margin-right: 8px;
+    /* margin-top: 16px; */
+    margin-bottom: 16px;
+    text-align: left;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+</style>
+<div style="padding-top: 60px;" >
+<div class="search_keyword">
+  <input id="Keyword" placeholder="Search for a Frame" class="search_keyword_input">
+</div>
+
+  <div class="results" id="search_result">
+  </div>
+</div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+
+  let result = document.getElementById("search_result");
+
+  function appendResult(result_div, frame_info) {
+    // let i = 0;
+    const frame_div = document.createElement("div");
+    frame_div.className="singleresult";
+    frame_div.innerHTML = `
+    ${frame_info.name}
+    <span class="page_span"> - ${frame_info.page}</span></div>
+    `;
+    frame_div.tabIndex = 0;
+    frame_div.id = frame_info.index;
+    frame_div.style.cursor = 'pointer';
+    frame_div.onclick = function () {
+      const index = frame_info.index;
+      parent.postMessage({ pluginMessage: { type: 'searchresults', index } }, '*');
+    };
+    result_div.appendChild(frame_div);
+  }
+  
+  onmessage = (event) => {
+    const message = event.data.pluginMessage;
+    appendResult(result, message);
+
+  }
+
+  function removeAllChildNodes(parent) {
+    while (parent.firstChild) {
+        parent.removeChild(parent.firstChild);
+    }
+  }
+  
+
+  document.getElementById("Keyword").focus();
+ 
+  document.getElementById('Keyword').addEventListener("keydown", function (event) {
+  
+    switch(event.keyCode) {
+      case 27:
+        parent.postMessage({ pluginMessage: { type: 'cancel'} }, '*')
+      // esc to close plugin. 
+      case 13:
+        removeAllChildNodes(result);
+        const textbox = document.getElementById('Keyword').value.toLowerCase();
+        parent.postMessage({ pluginMessage: { type: 'search_for_something', textbox } }, '*')
+      // enter to trigger search.
+       case 40:
+       event.preventDefault();
+      document.getElementById(0).focus();
+      // select the first result.
+      break;
+    }
+  });
+
+
+  result.addEventListener("keydown", function (event) {
+  let selectedResult = document.activeElement.id;
+      // esc to close plugin. 
+  switch(event.keyCode) {
+    case 27:
+        parent.postMessage({ pluginMessage: { type: 'cancel'} }, '*')
+
+    case 40:
+    event.preventDefault();
+    selectedResult = + selectedResult + 1;
+    console.log (selectedResult);
+    document.getElementById(selectedResult).focus()
+    break;
+    // select the next result.
+
+    case 38:
+    event.preventDefault();
+    if (selectedResult == 0){
+      document.getElementById('Keyword').focus()
+    } 
+    else {
+     selectedResult = + selectedResult - 1;
+    console.log (selectedResult);
+    document.getElementById(selectedResult).focus()
+    }
+    break;
+    // select the last result.
+
+    case 13:
+    const index = selectedResult;
+    parent.postMessage({ pluginMessage: { type: 'searchresults', index } }, '*')
+    // enter to select and jump.
+    
+    break;
+  }
+  
+  });
+
+//   window.addEventListener("keydown", function(e) {
+//     if([,"ArrowUp","ArrowDown",].indexOf(e.code) > -1) {
+//         e.preventDefault();
+//     }
+// }, false);
+  
+
+</script>
